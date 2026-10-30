@@ -1,4 +1,64 @@
 export type TransactionType = 'INCOME' | 'EXPENSE'
+export type AccountType = 'SAVINGS' | 'CURRENT' | 'CASH' | 'WALLET' | 'CREDIT_CARD'
+export type AccountStatus = 'ACTIVE' | 'CLOSED'
+export type LedgerEntryType = 'DEBIT' | 'CREDIT'
+
+export interface Account {
+  id: string
+  name: string
+  accountType: AccountType
+  currency: string
+  openingBalance: number
+  currentBalance: number
+  status: AccountStatus
+  createdAt: string
+  updatedAt: string
+}
+
+export interface AccountInput {
+  name: string
+  accountType: AccountType
+  currency?: string
+  openingBalance: string
+}
+
+export interface LedgerEntry {
+  id: string
+  accountId: string
+  referenceId: string
+  entryType: LedgerEntryType
+  amount: number
+  description: string | null
+  createdAt: string
+}
+
+export interface Transfer {
+  id: string
+  sourceAccountId: string
+  destinationAccountId: string
+  amount: number
+  currency: string
+  status: 'COMPLETED'
+  description: string | null
+  createdAt: string
+}
+
+export interface TransferInput {
+  sourceAccountId: string
+  destinationAccountId: string
+  amount: string
+  description?: string
+}
+
+export interface Page<T> {
+  content: T[]
+  totalPages: number
+  totalElements: number
+  number: number
+  size: number
+  first: boolean
+  last: boolean
+}
 
 export interface Transaction {
   id: number

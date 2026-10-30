@@ -16,6 +16,11 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/identity/, ''),
       },
+      '/accounts': {
+        target: 'http://localhost:8082',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/accounts/, ''),
+      },
     },
   },
 })

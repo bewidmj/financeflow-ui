@@ -5,6 +5,16 @@ import {
   getAdminUser,
   getAdminUsers,
 } from '../api/admin'
+import {
+  closeAccount,
+  createAccount,
+  createTransfer,
+  getAccount,
+  getAccountTransactions,
+  getAccounts,
+  getTransfers,
+  updateAccount,
+} from '../api/accounts'
 import { useAuth } from '../features/auth/AuthProvider'
 import {
   createBudget,
@@ -21,7 +31,13 @@ import {
   importCsv,
   updateTransaction,
 } from '../api/transactions'
-import type { BudgetInput, TransactionFilters, TransactionInput } from '../types/api'
+import type {
+  AccountInput,
+  BudgetInput,
+  TransactionFilters,
+  TransactionInput,
+  TransferInput,
+} from '../types/api'
 
 export function useTransactionPage(filters: TransactionFilters) {
   const { user } = useAuth()
@@ -47,6 +63,92 @@ export function useBudgets(month: string) {
     queryKey: ['budgets', user?.id, month],
     queryFn: () => getBudgets(month),
     enabled: Boolean(user && month),
+  })
+}
+
+export function useAccounts() {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['accounts', user?.id],
+    queryFn: getAccounts,
+    enabled: Boolean(user),
+  })
+}
+
+export function useAccount(id: string | undefined) {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['accounts', user?.id, id],
+    queryFn: () => {
+      if (!id) throw new Error('An account ID is required.')
+      return getAccount(id)
+    },
+    enabled: Boolean(user && id),
+  })
+}
+
+export function useAccountTransactions(id: string | undefined) {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['account-transactions', user?.id, id],
+    queryFn: () => {
+      if (!id) throw new Error('An account ID is required.')
+      return getAccountTransactions(id)
+    },
+    enabled: Boolean(user && id),
+  })
+}
+
+export function useTransfers() {
+  const { user } = useAuth()
+  return useQuery({
+    queryKey: ['transfers', user?.id],
+    queryFn: getTransfers,
+    enabled: Boolean(user),
+  })
+}
+
+export function useAccountMutations() {
+  const queryClient = useQueryClient()
+  const invalidate = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['accounts'] }),
+      queryClient.invalidateQueries({ queryKey: ['account-transactions'] }),
+    ])
+  }
+  return {
+    create: useMutation({
+      mutationFn: (input: AccountInput) => createAccount(input),
+      onSuccess: invalidate,
+    }),
+    update: useMutation({
+      mutationFn: ({ id, input }: {
+        id: string
+        input: Pick<AccountInput, 'name' | 'accountType'>
+      }) => updateAccount(id, input),
+      onSuccess: invalidate,
+    }),
+    close: useMutation({
+      mutationFn: (id: string) => closeAccount(id),
+      onSuccess: invalidate,
+    }),
+  }
+}
+
+export function useTransferMutations() {
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationFn: ({ input, idempotencyKey }: {
+      input: TransferInput
+      idempotencyKey: string
+    }) => createTransfer(input, idempotencyKey),
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['accounts'] }),
+        queryClient.invalidateQueries({ queryKey: ['account-transactions'] }),
+        queryClient.invalidateQueries({ queryKey: ['transfers'] }),
+      ])
+    },
   })
 }
 

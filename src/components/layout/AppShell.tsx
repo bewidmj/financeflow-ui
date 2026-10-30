@@ -1,6 +1,8 @@
 import {
   ArrowUpRight,
+  ArrowLeftRight,
   LayoutDashboard,
+  Landmark,
   LogOut,
   Menu,
   ReceiptText,
@@ -16,6 +18,8 @@ import { useAuth } from '../../features/auth/AuthProvider'
 const navItems = [
   { to: '/', label: 'Overview', icon: LayoutDashboard, end: true },
   { to: '/transactions', label: 'Transactions', icon: ReceiptText },
+  { to: '/accounts', label: 'Accounts', icon: Landmark },
+  { to: '/transfers', label: 'Transfers', icon: ArrowLeftRight },
   { to: '/budgets', label: 'Budgets', icon: Wallet },
   { to: '/settings', label: 'Settings', icon: Settings2 },
 ]

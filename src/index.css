@@ -387,6 +387,49 @@ a { color: inherit; text-decoration: none; }
 .admin-detail-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 22px; width: 100%; margin: 0; }
 .admin-detail-grid dt { color: #89948d; font-size: 10px; }
 .admin-detail-grid dd { margin: 5px 0 0; overflow-wrap: anywhere; font-size: 12px; font-weight: 550; }
+.accounts-summary-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
+.accounts-summary-card { min-height: 112px; display: flex; flex-direction: column; justify-content: center; gap: 5px; padding: 17px 19px; }
+.accounts-summary-card > span, .account-detail-balance > span, .account-detail-meta > span { color: #849087; font-size: 11px; }
+.accounts-summary-card > strong { color: #27362e; font-size: 25px; letter-spacing: -.7px; }
+.accounts-summary-card > small, .account-detail-balance > small, .account-detail-meta > small { color: #9aa49d; font-size: 10px; }
+.account-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
+.account-card { padding: 18px; min-width: 0; }
+.account-card-top { display: flex; justify-content: space-between; align-items: center; }
+.account-type-icon { width: 34px; height: 34px; display: inline-grid; place-items: center; border-radius: 9px; color: #278b66; background: #eaf5ef; flex: 0 0 auto; }
+.account-status { display: inline-flex; align-items: center; border-radius: 99px; padding: 4px 8px; font-size: 9px; font-weight: 650; }
+.account-status-active { color: #247650; background: #eaf5ef; }
+.account-status-closed { color: #7d8780; background: #f0f3f1; }
+.account-type-label { display: block; margin-top: 16px; color: #89948d; font-size: 9px; font-weight: 700; letter-spacing: .7px; text-transform: uppercase; }
+.account-card h2 { overflow: hidden; margin: 5px 0 14px; color: #2b3a31; font-size: 15px; font-weight: 620; text-overflow: ellipsis; white-space: nowrap; }
+.account-balance { display: block; color: #27362e; font-size: 21px; letter-spacing: -.45px; font-weight: 650; }
+.account-card-footer { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-top: 18px; padding-top: 12px; border-top: 1px solid #eef1ee; color: #95a097; font-size: 9px; }
+.account-form-panel { max-width: 620px; padding: 22px; }
+.account-form-note { color: #839087; font-size: 11px; line-height: 1.6; margin: 0; }
+.account-detail-summary { display: grid; grid-template-columns: minmax(0, 1.35fr) repeat(2, minmax(0, 1fr)); gap: 14px; }
+.account-detail-balance, .account-detail-meta { display: flex; flex-direction: column; gap: 9px; padding: 18px; }
+.account-detail-balance > strong { color: #27362e; font-size: clamp(22px, 3vw, 30px); letter-spacing: -.8px; }
+.account-detail-meta > strong { color: #2b3a31; font-size: 15px; }
+.account-ledger-heading { padding: 18px 19px 15px; }
+.account-ledger-table { min-width: 740px; }
+.account-ledger-table code { color: #87938a; font-size: 10px; }
+.ledger-type { display: inline-flex; padding: 4px 7px; border-radius: 5px; font-size: 9px; font-weight: 650; }
+.ledger-type-credit { color: #247650; background: #eaf5ef; }
+.ledger-type-debit { color: #a85245; background: #fbf0ed; }
+.text-success { color: #247650; }
+.transfer-form-panel { max-width: 850px; display: flex; flex-direction: column; gap: 18px; padding: 20px; }
+.transfer-empty { padding: 4px 0 0; color: #839087; font-size: 11px; }
+.transfer-empty p { margin: 0 0 8px; }
+.transfer-history-table { min-width: 760px; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+@media (max-width: 860px) {
+  .account-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .account-detail-summary { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .account-detail-balance { grid-column: 1 / -1; }
+}
+@media (max-width: 640px) {
+  .accounts-summary-grid, .account-grid, .account-detail-summary { grid-template-columns: 1fr; }
+  .account-detail-balance { grid-column: auto; }
+  .account-form-panel, .transfer-form-panel { padding: 16px; }
 }

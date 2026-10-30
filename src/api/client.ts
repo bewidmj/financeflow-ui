@@ -3,6 +3,7 @@ import { readToken, unauthorizedEvent } from '../lib/auth-token'
 
 const financeBaseUrl = import.meta.env.VITE_FINANCEFLOW_API_URL || '/finance'
 const identityBaseUrl = import.meta.env.VITE_IDENTITY_API_URL || '/identity'
+const accountBaseUrl = import.meta.env.VITE_ACCOUNT_API_URL || '/accounts'
 
 export const financeApi = axios.create({
   baseURL: financeBaseUrl,
@@ -16,7 +17,13 @@ export const identityApi = axios.create({
   headers: { Accept: 'application/json' },
 })
 
-for (const client of [financeApi, identityApi]) {
+export const accountApi = axios.create({
+  baseURL: accountBaseUrl,
+  timeout: 12_000,
+  headers: { Accept: 'application/json' },
+})
+
+for (const client of [financeApi, identityApi, accountApi]) {
   client.interceptors.request.use((config) => {
     const token = readToken()
     if (token) config.headers.Authorization = `Bearer ${token}`

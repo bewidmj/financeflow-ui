@@ -9,6 +9,10 @@ import { LoadingPage } from './components/common/States'
 const LoginPage = lazy(() => import('./features/auth/LoginPage').then((module) => ({ default: module.LoginPage })))
 const DashboardPage = lazy(() => import('./features/dashboard/DashboardPage').then((module) => ({ default: module.DashboardPage })))
 const TransactionsPage = lazy(() => import('./features/transactions/TransactionsPage').then((module) => ({ default: module.TransactionsPage })))
+const AccountsPage = lazy(() => import('./features/accounts/AccountsPage').then((module) => ({ default: module.AccountsPage })))
+const AccountDetailsPage = lazy(() => import('./features/accounts/AccountDetailsPage').then((module) => ({ default: module.AccountDetailsPage })))
+const AccountFormPage = lazy(() => import('./features/accounts/AccountFormPage').then((module) => ({ default: module.AccountFormPage })))
+const TransfersPage = lazy(() => import('./features/accounts/TransfersPage').then((module) => ({ default: module.TransfersPage })))
 const BudgetsPage = lazy(() => import('./features/budgets/BudgetsPage').then((module) => ({ default: module.BudgetsPage })))
 const SettingsPage = lazy(() => import('./features/settings/SettingsPage').then((module) => ({ default: module.SettingsPage })))
 const AdminDashboardPage = lazy(() => import('./features/admin/AdminDashboardPage').then((module) => ({ default: module.AdminDashboardPage })))
@@ -25,6 +29,11 @@ function AppRoutes() {
           <Route element={<AppShell />}>
             <Route index element={<DashboardPage />} />
             <Route path="/transactions" element={<TransactionsPage />} />
+            <Route path="/accounts" element={<AccountsPage />} />
+            <Route path="/accounts/new" element={<AccountFormPage />} />
+            <Route path="/accounts/:accountId/edit" element={<AccountFormPage />} />
+            <Route path="/accounts/:accountId" element={<AccountDetailsPage />} />
+            <Route path="/transfers" element={<TransfersPage />} />
             <Route path="/budgets" element={<BudgetsPage />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route element={<RequireAdmin />}>
