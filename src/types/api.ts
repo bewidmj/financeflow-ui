@@ -67,6 +67,8 @@ export interface Transaction {
   category: string
   description: string | null
   transactionDate: string
+  accountId?: string | null
+  transactionVersion?: number
 }
 
 export interface TransactionPage {
@@ -128,6 +130,7 @@ export interface ApiError {
 export interface CsvImportResponse {
   imported: number
   failed: number
+  skipped?: number
   errors: string[]
   processingTimeMs: number
 }
@@ -148,6 +151,7 @@ export interface TransactionInput {
   category: string
   description?: string
   transactionDate: string
+  accountId: string
 }
 
 export interface BudgetInput {

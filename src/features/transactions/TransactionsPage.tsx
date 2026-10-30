@@ -6,7 +6,7 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { z } from 'zod'
 import { EmptyState, ErrorState, LoadingBlock } from '../../components/common/States'
 import { Modal } from '../../components/common/Modal'
-import { useTransactionMutations, useTransactionPage } from '../../hooks/useFinanceQueries'
+import { useAccounts, useTransactionMutations, useTransactionPage } from '../../hooks/useFinanceQueries'
 import { apiErrorMessage } from '../../lib/errors'
 import { formatCurrency, formatDate } from '../../lib/format'
 import type { Transaction, TransactionFilters, TransactionType } from '../../types/api'
@@ -17,6 +17,7 @@ const rowSchema = z.object({
   category: z.string().trim().min(1, 'Enter a category.').max(100),
   description: z.string().max(500, 'Description must be 500 characters or fewer.'),
   transactionDate: z.string().min(1, 'Choose a date.').refine((value) => value <= new Date().toISOString().slice(0, 10), 'Date cannot be in the future.'),
+  accountId: z.string().uuid('Select an active INR account.'),
 })
 const transactionSchema = z.object({
   transactions: z.array(rowSchema).min(1).max(100, 'A batch can contain at most 100 transactions.'),
@@ -30,6 +31,7 @@ const newTransaction = () => ({
   category: '',
   description: '',
   transactionDate: new Date().toISOString().slice(0, 10),
+  accountId: '',
 })
 
 export function TransactionsPage() {
@@ -159,6 +161,10 @@ export function TransactionsPage() {
 
 function TransactionModal({ transaction, onClose, onDone }: { transaction?: Transaction; onClose: () => void; onDone: (message: string) => void }) {
   const mutations = useTransactionMutations()
+  const accountsQuery = useAccounts()
+  const accounts = (accountsQuery.data ?? []).filter(
+    (account) => account.status === 'ACTIVE' && account.currency === 'INR',
+  )
   const form = useForm<TransactionFormInput, unknown, TransactionForm>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
@@ -168,9 +174,16 @@ function TransactionModal({ transaction, onClose, onDone }: { transaction?: Tran
         category: transaction.category,
         description: transaction.description ?? '',
         transactionDate: transaction.transactionDate,
+        accountId: transaction.accountId ?? '',
       } : newTransaction()],
     },
   })
+  const { setValue } = form
+  useEffect(() => {
+    if (transaction?.accountId && accountsQuery.isSuccess) {
+      setValue('transactions.0.accountId', transaction.accountId, { shouldDirty: false })
+    }
+  }, [accountsQuery.isSuccess, setValue, transaction?.accountId])
   const fields = useFieldArray({ control: form.control, name: 'transactions' })
   const mutationError = transaction ? mutations.update.error : mutations.createBulk.error
   const saving = transaction ? mutations.update.isPending : mutations.createBulk.isPending
@@ -179,11 +192,11 @@ function TransactionModal({ transaction, onClose, onDone }: { transaction?: Tran
     try {
       if (transaction) {
         await mutations.update.mutateAsync({ id: transaction.id, input: values.transactions[0] })
-        onDone('Transaction updated successfully.')
+        onDone('Transaction updated. Account balance and history update asynchronously.')
         return
       }
       const response = await mutations.createBulk.mutateAsync(values.transactions)
-      onDone(`${response.created} transaction${response.created === 1 ? '' : 's'} added successfully.`)
+      onDone(`${response.created} transaction${response.created === 1 ? '' : 's'} saved. Account balance and history update asynchronously.`)
     } catch {
       // Mutation errors remain visible in the form below.
     }
@@ -199,13 +212,16 @@ function TransactionModal({ transaction, onClose, onDone }: { transaction?: Tran
             <label className="field"><span>Type</span><select {...form.register(`transactions.${index}.type`)}><option value="EXPENSE">Expense</option><option value="INCOME">Income</option></select></label>
             <label className="field"><span>Category</span><input maxLength={100} placeholder="e.g. Groceries" {...form.register(`transactions.${index}.category`)} />{form.formState.errors.transactions?.[index]?.category && <small className="field-error">{form.formState.errors.transactions[index]?.category?.message}</small>}</label>
             <label className="field"><span>Date</span><input type="date" max={new Date().toISOString().slice(0, 10)} {...form.register(`transactions.${index}.transactionDate`)} />{form.formState.errors.transactions?.[index]?.transactionDate && <small className="field-error">{form.formState.errors.transactions[index]?.transactionDate?.message}</small>}</label>
+            <label className="field"><span>Account</span><select aria-label="Account" disabled={accountsQuery.isLoading || accounts.length === 0} {...form.register(`transactions.${index}.accountId`)}><option value="">Select an INR account</option>{accounts.map((account) => <option key={account.id} value={account.id}>{account.name}</option>)}</select>{form.formState.errors.transactions?.[index]?.accountId && <small className="field-error">{form.formState.errors.transactions[index]?.accountId?.message}</small>}</label>
             <label className="field field-full"><span>Description <small>(optional)</small></span><input maxLength={500} placeholder="Add a note" {...form.register(`transactions.${index}.description`)} />{form.formState.errors.transactions?.[index]?.description && <small className="field-error">{form.formState.errors.transactions[index]?.description?.message}</small>}</label>
           </div>
         </fieldset>)}
+        {accountsQuery.error && <div className="form-alert" role="alert">{apiErrorMessage(accountsQuery.error)}</div>}
+        {!accountsQuery.isLoading && !accountsQuery.error && accounts.length === 0 && <div className="form-alert" role="alert">Create an active INR account before adding transactions.</div>}
         {mutationError && <div className="form-alert" role="alert">{apiErrorMessage(mutationError)}</div>}
         <div className="modal-actions modal-actions-between">
           {!transaction && <button className="button button-secondary" type="button" disabled={fields.fields.length >= 100} onClick={() => fields.append(newTransaction())}><Plus size={16} /> Add another</button>}
-          <div className="button-row"><button className="button button-secondary" type="button" disabled={saving} onClick={onClose}>Cancel</button><button className="button button-primary" type="submit" disabled={saving}>{saving ? 'Saving…' : transaction ? 'Save changes' : fields.fields.length > 1 ? `Save ${fields.fields.length} transactions` : 'Save transaction'}</button></div>
+          <div className="button-row"><button className="button button-secondary" type="button" disabled={saving} onClick={onClose}>Cancel</button><button className="button button-primary" type="submit" disabled={saving || accountsQuery.isLoading || accounts.length === 0}>{saving ? 'Saving…' : transaction ? 'Save changes' : fields.fields.length > 1 ? `Save ${fields.fields.length} transactions` : 'Save transaction'}</button></div>
         </div>
       </form>
     </Modal>
@@ -223,7 +239,7 @@ function DeleteTransactionModal({ transaction, onClose, onDone, onError }: {
   async function confirmDelete() {
     try {
       await mutation.mutateAsync(transaction.id)
-      onDone('Transaction deleted successfully.')
+      onDone('Transaction deleted. Account balance and history update asynchronously.')
     } catch (error) {
       onError(apiErrorMessage(error))
     }
@@ -245,7 +261,7 @@ function DeleteTransactionModal({ transaction, onClose, onDone, onError }: {
 function CsvImportModal({ onClose, onDone }: { onClose: () => void; onDone: (message: string) => void }) {
   const mutation = useTransactionMutations().import
   const [file, setFile] = useState<File | null>(null)
-  const [result, setResult] = useState<{ imported: number; failed: number; errors: string[] } | null>(null)
+  const [result, setResult] = useState<{ imported: number; failed: number; skipped?: number; errors: string[] } | null>(null)
   const [error, setError] = useState('')
 
   async function submit(event: React.FormEvent<HTMLFormElement>) {
@@ -267,10 +283,10 @@ function CsvImportModal({ onClose, onDone }: { onClose: () => void; onDone: (mes
   return (
     <Modal title="Import transactions" onClose={onClose}>
       <form className="modal-body form-stack" onSubmit={submit}>
-        <div className="import-instructions"><FileUp size={20} /><div><strong>Bring in your transactions</strong><p>CSV must include: amount, type, category, description, transactionDate. Dates use YYYY-MM-DD; type is INCOME or EXPENSE.</p></div></div>
+        <div className="import-instructions"><FileUp size={20} /><div><strong>Bring in your transactions</strong><p>CSV must include: amount, type, category, description, transactionDate, accountId. Dates use YYYY-MM-DD; type is INCOME or EXPENSE; each accountId must identify an account you own.</p></div></div>
         <label className="upload-zone"><input type="file" accept=".csv,text/csv" onChange={(event) => { setFile(event.target.files?.[0] ?? null); setResult(null); setError('') }} /><FileUp size={20} /><strong>{file?.name || 'Choose a CSV file'}</strong><span>CSV files only</span></label>
         {error && <div className="form-alert" role="alert">{error}</div>}
-        {result && <div className={result.failed ? 'import-result import-partial' : 'import-result'} role="status"><strong>{result.imported} imported · {result.failed} failed</strong>{result.errors.length > 0 && <ul>{result.errors.slice(0, 8).map((item, index) => <li key={`${index}-${item}`}>{item}</li>)}</ul>}</div>}
+        {result && <div className={result.failed ? 'import-result import-partial' : 'import-result'} role="status"><strong>{result.imported} imported · {result.skipped ?? 0} duplicate rows skipped · {result.failed} failed</strong>{result.errors.length > 0 && <ul>{result.errors.slice(0, 8).map((item, index) => <li key={`${index}-${item}`}>{item}</li>)}</ul>}</div>}
         <div className="modal-actions"><button className="button button-secondary" type="button" onClick={onClose}>Close</button><button className="button button-primary" type="submit" disabled={!file || mutation.isPending}>{mutation.isPending ? 'Importing…' : 'Import CSV'}</button></div>
       </form>
     </Modal>

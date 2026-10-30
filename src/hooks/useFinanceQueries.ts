@@ -196,7 +196,13 @@ export function useAdminTransactions(ownerId: string | undefined, filters: Trans
 
 export function useTransactionMutations() {
   const queryClient = useQueryClient()
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: ['transactions'] })
+  const invalidate = async () => {
+    await Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['transactions'] }),
+      queryClient.invalidateQueries({ queryKey: ['accounts'] }),
+      queryClient.invalidateQueries({ queryKey: ['account-transactions'] }),
+    ])
+  }
   return {
     create: useMutation({
       mutationFn: (input: TransactionInput) => createTransaction(input),
@@ -213,6 +219,8 @@ export function useTransactionMutations() {
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: ['transactions'] }),
           queryClient.invalidateQueries({ queryKey: ['budgets'] }),
+          queryClient.invalidateQueries({ queryKey: ['accounts'] }),
+          queryClient.invalidateQueries({ queryKey: ['account-transactions'] }),
         ])
       },
     }),
@@ -222,6 +230,8 @@ export function useTransactionMutations() {
         await Promise.all([
           queryClient.invalidateQueries({ queryKey: ['transactions'] }),
           queryClient.invalidateQueries({ queryKey: ['budgets'] }),
+          queryClient.invalidateQueries({ queryKey: ['accounts'] }),
+          queryClient.invalidateQueries({ queryKey: ['account-transactions'] }),
         ])
       },
     }),

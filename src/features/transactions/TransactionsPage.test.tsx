@@ -3,6 +3,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { MemoryRouter } from 'react-router-dom'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { deleteTransaction, getTransactions, updateTransaction } from '../../api/transactions'
+import { getAccounts } from '../../api/accounts'
 import { TransactionsPage } from './TransactionsPage'
 
 vi.mock('../../features/auth/AuthProvider', () => ({
@@ -21,6 +22,23 @@ vi.mock('../../api/transactions', () => ({
   importCsv: vi.fn(),
 }))
 
+vi.mock('../../api/accounts', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../api/accounts')>()
+  return { ...actual, getAccounts: vi.fn() }
+})
+
+const account = {
+  id: '9a367ac2-ae09-4da9-9b30-7cb9ee1439be',
+  name: 'Daily',
+  accountType: 'SAVINGS' as const,
+  currency: 'INR',
+  openingBalance: 500,
+  currentBalance: 500,
+  status: 'ACTIVE' as const,
+  createdAt: '2026-10-12T00:00:00Z',
+  updatedAt: '2026-10-12T00:00:00Z',
+}
+
 const transaction = {
   id: 7,
   amount: 42.5,
@@ -28,6 +46,8 @@ const transaction = {
   category: 'Groceries',
   description: 'Weekly shop',
   transactionDate: '2026-10-12',
+  accountId: account.id,
+  transactionVersion: 1,
 }
 
 function renderPage() {
@@ -44,6 +64,7 @@ function renderPage() {
 
 describe('TransactionsPage actions', () => {
   beforeEach(() => {
+    vi.mocked(getAccounts).mockResolvedValue([account])
     vi.mocked(getTransactions).mockResolvedValue({
       content: [transaction],
       totalPages: 1,
@@ -66,18 +87,22 @@ describe('TransactionsPage actions', () => {
     renderPage()
     fireEvent.click(await screen.findByRole('button', { name: 'Edit Groceries transaction' }))
 
+    await screen.findByRole('option', { name: 'Daily' })
     expect(screen.getByLabelText('Amount (INR)')).toHaveValue(42.5)
     expect(screen.getByLabelText('Category')).toHaveValue('Groceries')
+    await waitFor(() => expect(screen.getByLabelText('Account')).toHaveValue(account.id))
     fireEvent.change(screen.getByLabelText('Category'), { target: { value: 'Food' } })
     fireEvent.click(screen.getByRole('button', { name: 'Save changes' }))
 
-    await screen.findByText('Transaction updated successfully.')
+    await waitFor(() => expect(updateTransaction).toHaveBeenCalled())
+    await screen.findByText('Transaction updated. Account balance and history update asynchronously.')
     expect(updateTransaction).toHaveBeenCalledWith(7, {
       amount: 42.5,
       type: 'EXPENSE',
       category: 'Food',
       description: 'Weekly shop',
       transactionDate: '2026-10-12',
+      accountId: account.id,
     })
     await waitFor(() => expect(getTransactions).toHaveBeenCalledTimes(2))
   })
@@ -101,7 +126,7 @@ describe('TransactionsPage actions', () => {
     expect(deleteTransaction).not.toHaveBeenCalled()
     fireEvent.click(screen.getByRole('button', { name: 'Delete transaction' }))
 
-    await screen.findByText('Transaction deleted successfully.')
+    await screen.findByText('Transaction deleted. Account balance and history update asynchronously.')
     expect(deleteTransaction).toHaveBeenCalledWith(7)
     await waitFor(() => expect(getTransactions).toHaveBeenCalledTimes(2))
   })
