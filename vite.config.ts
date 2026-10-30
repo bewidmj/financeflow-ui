@@ -16,10 +16,10 @@ export default defineConfig({
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/identity/, ''),
       },
-      '/accounts': {
+      '/account-api': {
         target: 'http://localhost:8082',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/accounts/, ''),
+        rewrite: (path) => path.replace(/^\/account-api/, ''),
       },
     },
   },

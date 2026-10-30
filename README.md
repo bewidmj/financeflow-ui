@@ -17,7 +17,9 @@ Start the backend services separately:
 - FinanceFlow API at `http://localhost:8080`
 - Identity Service at `http://localhost:8081`
 
-Vite proxies `/finance` to FinanceFlow and `/identity` to Identity Service.
+Vite proxies `/finance` to FinanceFlow, `/identity` to Identity Service, and
+`/account-api` to Account Service. The account API proxy uses a separate prefix
+from the UI's `/accounts` route so reloading that route serves the application.
 Requests are same-origin in local development, so backend CORS is not required.
 
 ## Commands
@@ -37,6 +39,7 @@ Copy `.env.example` to `.env.local` to override:
 
 - `VITE_FINANCEFLOW_API_URL`: finance API base URL (default `/finance`)
 - `VITE_IDENTITY_API_URL`: identity API base URL (default `/identity`)
+- `VITE_ACCOUNT_API_URL`: account API base URL (default `/account-api`)
 - `VITE_CURRENCY`: currency code for displayed amounts (default `INR`)
 
 `VITE_*` values are included in the browser bundle; do not put secrets in them.

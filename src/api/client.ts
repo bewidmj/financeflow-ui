@@ -3,7 +3,7 @@ import { readToken, unauthorizedEvent } from '../lib/auth-token'
 
 const financeBaseUrl = import.meta.env.VITE_FINANCEFLOW_API_URL || '/finance'
 const identityBaseUrl = import.meta.env.VITE_IDENTITY_API_URL || '/identity'
-const accountBaseUrl = import.meta.env.VITE_ACCOUNT_API_URL || '/accounts'
+const accountBaseUrl = import.meta.env.VITE_ACCOUNT_API_URL || '/account-api'
 
 export const financeApi = axios.create({
   baseURL: financeBaseUrl,
